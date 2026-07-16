@@ -1,0 +1,5 @@
+{"idempotency":"pr-1","speaker":"Tolani","text":"Let's compare Redis Streams and Kafka for the event pipeline.","started_ms":0,"ended_ms":4000,"confidence":0.94,"isFinal":true}
+{"idempotency":"pr-2","speaker":"Sarah","text":"Kafka gives us stronger multi-consumer fan-out, but Redis is simpler operationally.","started_ms":4000,"ended_ms":9000,"confidence":0.91,"isFinal":true}
+{"idempotency":"pr-3","speaker":"Daniel","text":"I can investigate Redis migration risks this week.","started_ms":9000,"ended_ms":13000,"confidence":0.96,"isFinal":true}
+{"idempotency":"pr-4","speaker":"Tolani","text":"Decision: prototype Redis Streams first for the internal bus.","started_ms":13000,"ended_ms":17000,"confidence":0.93,"isFinal":true}
+{"idempotency":"pr-5","speaker":"Sarah","text":"Open question: how do we handle poison messages?","started_ms":17000,"ended_ms":20000,"confidence":0.9,"isFinal":true}

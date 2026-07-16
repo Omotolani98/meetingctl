@@ -1,0 +1,31 @@
+# editor / OS noise
+.DS_Store
+.idea/
+.vscode/
+
+# local build output
+bin/
+dist/
+*.exe
+*.test
+coverage.out
+*.coverprofile
+
+# local data / secrets
+.data/
+.meetingctl/
+auth.env
+control.token
+encryption.key
+meetings.db
+
+# generated runtime files
+*.log
+*.out
+*.tmp
+*.pid
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3

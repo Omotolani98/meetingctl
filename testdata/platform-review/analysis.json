@@ -1,0 +1,25 @@
+{
+  "summary": "The team compared Redis Streams and Kafka for the event pipeline. They decided to prototype Redis Streams first for the internal bus. Daniel owns Redis migration risk investigation. An open question remains about poison message handling.",
+  "insights": [
+    {
+      "type": "decision",
+      "text": "Prototype Redis Streams first for the internal bus",
+      "confidence": 0.92,
+      "sourceSequences": [4]
+    },
+    {
+      "type": "action_item",
+      "text": "Investigate Redis migration risks",
+      "owner": "Daniel",
+      "status": "open",
+      "confidence": 0.95,
+      "sourceSequences": [3]
+    },
+    {
+      "type": "question",
+      "text": "How do we handle poison messages?",
+      "confidence": 0.9,
+      "sourceSequences": [5]
+    }
+  ]
+}
