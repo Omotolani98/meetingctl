@@ -24,7 +24,7 @@ meetingctl  ──►  meetingd (loopback HTTP)
 | **Transcription / analysis** | `OPENAI_API_KEY` (Platform API billing) |
 | **Local MCP clients** | `meetingd` + `meeting-mcp` or Streamable HTTP `/mcp` |
 
-ChatGPT web is not a direct local MCP client. If you need it, use an external HTTPS bridge.
+ChatGPT web is not a direct local MCP client. ChatGPT desktop can use the local MCP endpoint if it supports local server URLs and bearer-token auth.
 
 ## Quick start (dev)
 
@@ -114,8 +114,17 @@ MCP helpers:
 ```bash
 meetingctl mcp status
 meetingctl mcp config
+meetingctl mcp chatgpt-desktop
 meetingctl mcp tools
+meetingctl update
 ```
+
+ChatGPT desktop setup:
+
+1. Start `meetingd`.
+2. Run `meetingctl mcp chatgpt-desktop`.
+3. Add a local MCP server in ChatGPT desktop using the printed URL.
+4. Use the bearer token from `~/.meetingctl/control.token`.
 
 Stdio MCP (IDEs):
 
@@ -135,7 +144,8 @@ go run ./cmd/meeting-mcp
 | `meetingctl stop` | Finalize + analyze |
 | `meetingctl meetings` / `delete` | History |
 | `meetingctl auth` | API Key auth |
-| `meetingctl mcp` | MCP endpoint/config/tools |
+| `meetingctl mcp` | MCP endpoint/config/tools/chatgpt desktop |
+| `meetingctl update` | Reinstall latest binaries |
 | `meetingctl keygen` | Encryption key |
 
 Control API (loopback, bearer token in `~/.meetingctl/control.token`):

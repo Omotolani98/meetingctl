@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -53,6 +54,21 @@ func newMCPCmd() *cobra.Command {
 		},
 	})
 	cmd.AddCommand(&cobra.Command{
+		Use:   "chatgpt-desktop",
+		Short: "Print ChatGPT desktop MCP setup details",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Fprintln(cmd.OutOrStdout(), "ChatGPT desktop setup:")
+			fmt.Fprintf(cmd.OutOrStdout(), "  MCP server URL: %s\n", defaultMCPURL())
+			fmt.Fprintf(cmd.OutOrStdout(), "  Control token: %s\n", controlTokenPath())
+			fmt.Fprintln(cmd.OutOrStdout(), "  Auth header: Authorization: Bearer <token from control.token>")
+			fmt.Fprintln(cmd.OutOrStdout(), "  Transport: streamable-http")
+			fmt.Fprintln(cmd.OutOrStdout(), "")
+			fmt.Fprintln(cmd.OutOrStdout(), "In ChatGPT desktop, add a local MCP server with that URL and bearer token.")
+			fmt.Fprintln(cmd.OutOrStdout(), "Then verify with: meetingctl mcp status")
+			return nil
+		},
+	})
+	cmd.AddCommand(&cobra.Command{
 		Use:   "tools",
 		Short: "List MCP tools exposed by meetingctl",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -91,4 +107,19 @@ func defaultMCPURL() string {
 		return "http://127.0.0.1:7338/mcp"
 	}
 	return fmt.Sprintf("http://%s:%d/mcp", host, portNum+1)
+}
+
+func controlTokenPath() string {
+	if path := strings.TrimSpace(os.Getenv("MEETINGCTL_TOKEN_FILE")); path != "" {
+		return path
+	}
+	dataDir := strings.TrimSpace(os.Getenv("MEETINGCTL_DATA_DIR"))
+	if dataDir == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return filepath.Join("~", ".meetingctl", "control.token")
+		}
+		dataDir = filepath.Join(home, ".meetingctl")
+	}
+	return filepath.Join(dataDir, "control.token")
 }

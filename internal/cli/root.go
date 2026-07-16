@@ -32,6 +32,7 @@ Set MEETINGCTL_ENCRYPTION_KEY to a 32-byte key (64 hex characters).`,
 		newDoctorCmd(),
 		newAuthCmd(),
 		newMCPCmd(),
+		newUpdateCmd(),
 	)
 	return root
 }
