@@ -22,12 +22,11 @@ func newAuthCmd() *cobra.Command {
 	)
 	cmd := &cobra.Command{
 		Use:   "auth",
-		Short: "Authenticate with AI providers or ChatGPT Subscription",
+		Short: "Authenticate provider API keys",
 		Long: `Interactive authentication for meetingctl.
 
 Methods:
-  API Key               — store a provider key (OpenAI) for STT/analysis
-  ChatGPT Subscription  — connect MCP to ChatGPT via Secure Tunnel
+  API Key — store a provider key (OpenAI) for STT/analysis
 
 Browse providers from models.dev; only supported providers accept credentials.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -35,17 +34,13 @@ Browse providers from models.dev; only supported providers accept credentials.`,
 			if err != nil {
 				return err
 			}
-			// Non-interactive API key path
 			if method == "api-key" || method == "api_key" {
 				return runNonInteractiveAPIKey(cmd.Context(), svc, provider, usage, keyStdin)
-			}
-			if method == "subscription" {
-				return svc.RunInteractive(cmd.Context()) // still interactive for tunnel fields
 			}
 			return svc.RunInteractive(cmd.Context())
 		},
 	}
-	cmd.Flags().StringVar(&method, "method", "", "api-key | subscription (optional; interactive if empty)")
+	cmd.Flags().StringVar(&method, "method", "", "api-key (optional; interactive if empty)")
 	cmd.Flags().StringVar(&provider, "provider", "openai", "provider id for api-key method")
 	cmd.Flags().BoolVar(&keyStdin, "key-stdin", false, "read API key from stdin")
 	cmd.Flags().StringVar(&usage, "usage", "both", "both | transcription | analysis")

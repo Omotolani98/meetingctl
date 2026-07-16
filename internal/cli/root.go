@@ -11,9 +11,9 @@ import (
 func NewRoot() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "meetingctl",
-		Short: "Local-first meeting memory for ChatGPT via MCP",
+		Short: "Local-first meeting memory via MCP",
 		Long: `meetingctl captures meetings, stores encrypted transcript memory,
-and exposes it to ChatGPT through an MCP server.
+and exposes it through an MCP server.
 
 Set MEETINGCTL_ENCRYPTION_KEY to a 32-byte key (64 hex characters).`,
 		SilenceUsage:  true,
@@ -31,6 +31,7 @@ Set MEETINGCTL_ENCRYPTION_KEY to a 32-byte key (64 hex characters).`,
 		newKeygenCmd(),
 		newDoctorCmd(),
 		newAuthCmd(),
+		newMCPCmd(),
 	)
 	return root
 }

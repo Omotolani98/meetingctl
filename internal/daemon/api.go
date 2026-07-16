@@ -132,13 +132,9 @@ func (a *API) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
 		"provider": st.Provider,
 		"usage":    st.Usage,
 		// Never return secrets.
-		"api_key_configured":    authStore.HasCredential("openai", "api-key"),
-		"tunnel_key_configured": authStore.HasCredential("openai-tunnel", "runtime-key"),
-		"transcription":         a.Cfg.TranscriptionProvider,
-		"analysis":              a.Cfg.AnalysisProvider,
-	}
-	if st.TunnelID != "" {
-		out["tunnel_id"] = st.TunnelID
+		"api_key_configured": authStore.HasCredential("openai", "api-key"),
+		"transcription":      a.Cfg.TranscriptionProvider,
+		"analysis":           a.Cfg.AnalysisProvider,
 	}
 	writeJSON(w, http.StatusOK, out)
 }
@@ -226,8 +222,8 @@ func (a *API) handleStartMeeting(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{
-		"meeting":            meetingJSON(m),
-		"ingested_segments":  n,
+		"meeting":           meetingJSON(m),
+		"ingested_segments": n,
 	})
 }
 
@@ -470,7 +466,7 @@ func meetingJSON(m *meetings.Meeting) map[string]any {
 	}
 	out := map[string]any{
 		"id": m.ID, "title": m.Title, "status": m.Status,
-		"started_at": m.StartedAt.Format(time.RFC3339),
+		"started_at":   m.StartedAt.Format(time.RFC3339),
 		"participants": parts,
 	}
 	if m.EndedAt != nil {

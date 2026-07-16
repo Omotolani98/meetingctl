@@ -6,9 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 
@@ -30,7 +28,6 @@ type Service struct {
 func (s *Service) RunInteractive(ctx context.Context) error {
 	method, err := s.Prompter.Select("Choose authentication method:", []Option{
 		{ID: "api_key", Label: "API Key", Description: "Provider backend key for STT/analysis"},
-		{ID: "subscription", Label: "ChatGPT Subscription", Description: "Connect meeting memory to ChatGPT via MCP"},
 	})
 	if err != nil {
 		return err
@@ -38,8 +35,6 @@ func (s *Service) RunInteractive(ctx context.Context) error {
 	switch method {
 	case "api_key":
 		return s.runAPIKey(ctx)
-	case "subscription":
-		return s.runSubscription(ctx)
 	default:
 		return fmt.Errorf("unknown method %q", method)
 	}
@@ -134,85 +129,6 @@ func (s *Service) configureOpenAIAPIKey(ctx context.Context, p catalog.Provider)
 	return nil
 }
 
-func (s *Service) runSubscription(ctx context.Context) error {
-	fmt.Fprintln(s.Out, "\nChatGPT Subscription uses MCP, not backend API calls.")
-	fmt.Fprintln(s.Out, "The Secure MCP Tunnel requires a Platform runtime key for transport only.")
-	fmt.Fprintln(s.Out)
-
-	// Check meetingd
-	if err := s.checkDaemon(ctx); err != nil {
-		fmt.Fprintf(s.Out, "meetingd: FAIL (%v)\n", err)
-		fmt.Fprintln(s.Out, "Start meetingd first, then re-run: meetingctl auth")
-		return err
-	}
-	fmt.Fprintln(s.Out, "meetingd: ok")
-	fmt.Fprintln(s.Out, "MCP endpoint: http://127.0.0.1:7338/mcp (default)")
-
-	tunnelID, err := s.Prompter.Text("Tunnel ID (from platform.openai.com tunnels)")
-	if err != nil {
-		return err
-	}
-	if tunnelID == "" {
-		return fmt.Errorf("tunnel ID is required")
-	}
-	runtimeKey, err := s.Prompter.Secret("Tunnel runtime key (CONTROL_PLANE_API_KEY)")
-	if err != nil {
-		return err
-	}
-	if runtimeKey == "" {
-		return fmt.Errorf("runtime key is required")
-	}
-	if err := s.Store.SetCredential("openai-tunnel", "runtime-key", runtimeKey); err != nil {
-		return err
-	}
-	st := State{
-		Method:   "subscription",
-		Provider: "chatgpt-subscription",
-		TunnelID: tunnelID,
-	}
-	if err := s.Store.SaveState(st); err != nil {
-		return err
-	}
-
-	// Configure tunnel-client if available.
-	if path, err := exec.LookPath(s.Cfg.TunnelClientPath); err == nil {
-		mcpURL := "http://127.0.0.1:7338/mcp"
-		if v := os.Getenv("MEETINGCTL_MCP_LISTEN"); v != "" {
-			mcpURL = "http://" + v + "/mcp"
-		}
-		cmd := exec.CommandContext(ctx, path, "init",
-			"--profile", s.Cfg.TunnelProfile,
-			"--tunnel-id", tunnelID,
-			"--mcp-server-url", mcpURL,
-		)
-		cmd.Env = append(os.Environ(), "CONTROL_PLANE_API_KEY="+runtimeKey)
-		cmd.Stdout = s.Out
-		cmd.Stderr = s.Out
-		fmt.Fprintln(s.Out, "Configuring tunnel-client...")
-		if err := cmd.Run(); err != nil {
-			fmt.Fprintf(s.Out, "warn: tunnel-client init: %v\n", err)
-		} else {
-			doc := exec.CommandContext(ctx, path, "doctor", "--profile", s.Cfg.TunnelProfile, "--explain")
-			doc.Env = cmd.Env
-			doc.Stdout = s.Out
-			doc.Stderr = s.Out
-			_ = doc.Run()
-		}
-		fmt.Fprintf(s.Out, "Start tunnel with:\n  CONTROL_PLANE_API_KEY=*** %s run --profile %s\n", path, s.Cfg.TunnelProfile)
-	} else {
-		fmt.Fprintln(s.Out, "tunnel-client not found in PATH.")
-		fmt.Fprintln(s.Out, "Install from https://github.com/openai/tunnel-client/releases")
-	}
-
-	fmt.Fprintln(s.Out)
-	fmt.Fprintln(s.Out, "Opening ChatGPT plugin settings...")
-	_ = openBrowser("https://chatgpt.com/plugins")
-	fmt.Fprintln(s.Out, "In ChatGPT: create a developer-mode app → Connection = Tunnel → select your tunnel.")
-	fmt.Fprintln(s.Out, "Note: subscription mode does not fund OpenAI API STT/analysis.")
-	fmt.Fprintln(s.Out, "Configure local STT (whispercpp/command) if you have no API key.")
-	return nil
-}
-
 // StatusText prints auth status without secrets.
 func (s *Service) StatusText() (string, error) {
 	st, err := s.Store.LoadState()
@@ -225,21 +141,12 @@ func (s *Service) StatusText() (string, error) {
 	if len(st.Usage) > 0 {
 		fmt.Fprintf(&b, "usage: %s\n", strings.Join(st.Usage, ", "))
 	}
-	if st.TunnelID != "" {
-		fmt.Fprintf(&b, "tunnel_id: %s\n", st.TunnelID)
-	}
 	switch st.Method {
 	case "api_key":
 		if s.Store.HasCredential("openai", "api-key") {
 			fmt.Fprintln(&b, "api_key: configured")
 		} else {
 			fmt.Fprintln(&b, "api_key: missing")
-		}
-	case "subscription":
-		if s.Store.HasCredential("openai-tunnel", "runtime-key") {
-			fmt.Fprintln(&b, "tunnel_runtime_key: configured")
-		} else {
-			fmt.Fprintln(&b, "tunnel_runtime_key: missing")
 		}
 	}
 	return b.String(), nil
@@ -266,7 +173,6 @@ func ApplyToEnv(store *Store) error {
 	}
 	clearAuthEnv := func() {
 		_ = os.Unsetenv("OPENAI_API_KEY")
-		_ = os.Unsetenv("CONTROL_PLANE_API_KEY")
 		_ = os.Unsetenv("MEETINGCTL_TRANSCRIPTION_PROVIDER")
 		_ = os.Unsetenv("MEETINGCTL_ANALYSIS_PROVIDER")
 	}
@@ -277,7 +183,6 @@ func ApplyToEnv(store *Store) error {
 			clearAuthEnv()
 			return err
 		}
-		_ = os.Unsetenv("CONTROL_PLANE_API_KEY")
 		_ = os.Setenv("OPENAI_API_KEY", key)
 		useT, useA := false, false
 		for _, u := range st.Usage {
@@ -301,15 +206,6 @@ func ApplyToEnv(store *Store) error {
 		} else {
 			_ = os.Setenv("MEETINGCTL_ANALYSIS_PROVIDER", "none")
 		}
-	case "subscription":
-		_ = os.Unsetenv("OPENAI_API_KEY")
-		// Do not set OPENAI_API_KEY from subscription.
-		key, err := store.GetCredential("openai-tunnel", "runtime-key")
-		if err != nil {
-			clearAuthEnv()
-			return err
-		}
-		_ = os.Setenv("CONTROL_PLANE_API_KEY", key)
 	case "none", "":
 		clearAuthEnv()
 	}
@@ -348,22 +244,6 @@ func (s *Service) reloadDaemon(ctx context.Context) error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= 400 {
-		return fmt.Errorf("status %s", resp.Status)
-	}
-	return nil
-}
-
-func (s *Service) checkDaemon(ctx context.Context) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.Cfg.BaseURL()+"/healthz", nil)
-	if err != nil {
-		return err
-	}
-	resp, err := s.httpClient().Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("status %s", resp.Status)
 	}
 	return nil
@@ -412,19 +292,6 @@ func usageFromID(id string) []string {
 	default:
 		return []string{"transcription", "analysis"}
 	}
-}
-
-func openBrowser(url string) error {
-	var cmd *exec.Cmd
-	switch runtime.GOOS {
-	case "darwin":
-		cmd = exec.Command("open", url)
-	case "windows":
-		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
-	default:
-		cmd = exec.Command("xdg-open", url)
-	}
-	return cmd.Start()
 }
 
 func orDash(s string) string {

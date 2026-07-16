@@ -11,10 +11,9 @@ import (
 
 // State is non-secret auth configuration.
 type State struct {
-	Method   string   `json:"method"`   // api_key | subscription | none
-	Provider string   `json:"provider"` // openai | chatgpt-subscription | ...
+	Method   string   `json:"method"`          // api_key | none
+	Provider string   `json:"provider"`        // openai | ...
 	Usage    []string `json:"usage,omitempty"` // transcription, analysis
-	TunnelID string   `json:"tunnelId,omitempty"`
 }
 
 // Store persists auth state and credentials with user-only file permissions.

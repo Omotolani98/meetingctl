@@ -13,15 +13,15 @@ import (
 
 // Config holds process-wide settings.
 type Config struct {
-	DataDir string
-	DBPath  string
+	DataDir  string
+	DBPath   string
 	SpoolDir string
 
 	// Daemon
-	ListenAddr  string
+	ListenAddr   string
 	ControlToken string
-	PIDFile     string
-	TokenFile   string
+	PIDFile      string
+	TokenFile    string
 
 	// Encryption env var name (not the secret).
 	EncryptionEnv string
@@ -34,21 +34,15 @@ type Config struct {
 	WhisperModelPath      string
 	CommandTranscriber    string
 
-	AnalysisProvider string
-	AnalysisModel    string
-	AnalysisInterval time.Duration
+	AnalysisProvider     string
+	AnalysisModel        string
+	AnalysisInterval     time.Duration
 	AnalysisSegThreshold int
 
 	// Audio
 	MicDevice    string
 	SystemDevice string
 	ChunkSeconds int
-
-	// ChatGPT / tunnel
-	ChatGPTTransport string
-	TunnelID         string
-	TunnelClientPath string
-	TunnelProfile    string
 
 	// OpenAI
 	OpenAIBaseURL string
@@ -113,10 +107,6 @@ func Load() (*Config, error) {
 		MicDevice:             os.Getenv("MEETINGCTL_MIC_DEVICE"),
 		SystemDevice:          os.Getenv("MEETINGCTL_SYSTEM_DEVICE"),
 		ChunkSeconds:          chunkSec,
-		ChatGPTTransport:      envOr("MEETINGCTL_CHATGPT_TRANSPORT", "secure-tunnel"),
-		TunnelID:              os.Getenv("MEETINGCTL_TUNNEL_ID"),
-		TunnelClientPath:      envOr("MEETINGCTL_TUNNEL_CLIENT", "tunnel-client"),
-		TunnelProfile:         envOr("MEETINGCTL_TUNNEL_PROFILE", "meetingctl"),
 		OpenAIBaseURL:         envOr("OPENAI_BASE_URL", "https://api.openai.com/v1"),
 	}
 

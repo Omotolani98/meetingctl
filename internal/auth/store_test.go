@@ -90,13 +90,12 @@ func TestApplyToEnvClearsStaleSecrets(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Setenv("OPENAI_API_KEY", "stale")
-	t.Setenv("CONTROL_PLANE_API_KEY", "stale")
 	t.Setenv("MEETINGCTL_TRANSCRIPTION_PROVIDER", "openai")
 	t.Setenv("MEETINGCTL_ANALYSIS_PROVIDER", "openai")
 	if err := auth.ApplyToEnv(s); err != nil {
 		t.Fatal(err)
 	}
-	for _, k := range []string{"OPENAI_API_KEY", "CONTROL_PLANE_API_KEY", "MEETINGCTL_TRANSCRIPTION_PROVIDER", "MEETINGCTL_ANALYSIS_PROVIDER"} {
+	for _, k := range []string{"OPENAI_API_KEY", "MEETINGCTL_TRANSCRIPTION_PROVIDER", "MEETINGCTL_ANALYSIS_PROVIDER"} {
 		if got := os.Getenv(k); got != "" {
 			t.Fatalf("%s = %q, want cleared", k, got)
 		}

@@ -23,8 +23,7 @@ const (
 type Strategy string
 
 const (
-	StrategyAPIKey       Strategy = "api_key"
-	StrategySubscription Strategy = "subscription"
+	StrategyAPIKey Strategy = "api_key"
 )
 
 // Provider is a selectable auth/provider entry.
@@ -43,11 +42,11 @@ type Provider struct {
 
 // modelsDevProvider matches models.dev provider objects.
 type modelsDevProvider struct {
-	ID     string                    `json:"id"`
-	Name   string                    `json:"name"`
-	Env    []string                  `json:"env"`
-	API    string                    `json:"api"`
-	Doc    string                    `json:"doc"`
+	ID     string                     `json:"id"`
+	Name   string                     `json:"name"`
+	Env    []string                   `json:"env"`
+	API    string                     `json:"api"`
+	Doc    string                     `json:"doc"`
 	Models map[string]json.RawMessage `json:"models"`
 }
 
@@ -123,14 +122,6 @@ func curatedSupported() []Provider {
 			BaseURL:       "https://api.openai.com/v1",
 			DocURL:        "https://platform.openai.com/docs",
 			Description:   "API Key for transcription and analysis (Platform billing)",
-		},
-		{
-			ID:          "chatgpt-subscription",
-			Name:        "ChatGPT Subscription",
-			Supported:   true,
-			Strategy:    StrategySubscription,
-			DocURL:      "https://developers.openai.com/apps-sdk/deploy/connect-chatgpt",
-			Description: "Connect meeting memory to ChatGPT via MCP Secure Tunnel",
 		},
 	}
 }

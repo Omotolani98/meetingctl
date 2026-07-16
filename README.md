@@ -1,8 +1,8 @@
 # meetingctl
 
-Local-first meeting memory for ChatGPT via the Model Context Protocol (MCP).
+Local-first meeting memory over MCP.
 
-`meetingd` captures meetings, stores encrypted transcript memory in SQLite, and exposes it through MCP. Raw audio is never streamed into ChatGPT.
+`meetingd` captures meetings, stores encrypted transcript memory in SQLite, and exposes it through MCP. Raw audio is never streamed to an AI client.
 
 ## Architecture (v0.2)
 
@@ -14,20 +14,17 @@ meetingctl  ──►  meetingd (loopback HTTP)
                     ├── encrypted SQLite
                     └── MCP Streamable HTTP (/mcp)
                               │
-                     Secure MCP Tunnel (optional)
-                              │
-                           ChatGPT
+                 local MCP clients (Claude, Codex, IDEs)
 ```
 
-### Two credential modes (do not mix)
+### Credentials
 
 | Goal | What you need |
 |------|----------------|
-| **ChatGPT subscription** queries meeting memory | `meetingd` + Secure MCP Tunnel (`CONTROL_PLANE_API_KEY` for tunnel transport only) |
-| **Autonomous STT / analysis** | `OPENAI_API_KEY` (Platform API billing — separate from ChatGPT Plus/Pro) |
-| **Subscription-only capture** | Local STT (`whispercpp` or `command`) + MCP tunnel; no model API key |
+| **Transcription / analysis** | `OPENAI_API_KEY` (Platform API billing) |
+| **Local MCP clients** | `meetingd` + `meeting-mcp` or Streamable HTTP `/mcp` |
 
-ChatGPT cookies/session tokens are **not** supported and cannot fund API calls.
+ChatGPT web is not a direct local MCP client. If you need it, use an external HTTPS bridge.
 
 ## Quick start (dev)
 
@@ -103,7 +100,6 @@ meetingctl auth refresh-providers
 Interactive menu:
 
 1. **API Key** — choose a provider (OpenAI supported; others browsed from [models.dev](https://models.dev))
-2. **ChatGPT Subscription** — connect MCP to ChatGPT via Secure Tunnel
 
 API key (non-interactive):
 
@@ -111,14 +107,15 @@ API key (non-interactive):
 printf '%s' "$OPENAI_API_KEY" | meetingctl auth --method api-key --provider openai --key-stdin
 ```
 
-ChatGPT Subscription flow:
-
-1. Ensures `meetingd` is healthy
-2. Stores tunnel ID + Platform runtime key (transport only)
-3. Configures `tunnel-client` when installed
-4. Opens `https://chatgpt.com/plugins` for app connection
-
 Credentials live under `~/.meetingctl/auth/` (mode `0600`). Secrets are never logged or returned by status APIs.
+
+MCP helpers:
+
+```bash
+meetingctl mcp status
+meetingctl mcp config
+meetingctl mcp tools
+```
 
 Stdio MCP (IDEs):
 
@@ -137,7 +134,8 @@ go run ./cmd/meeting-mcp
 | `meetingctl watch` | Poll transcript |
 | `meetingctl stop` | Finalize + analyze |
 | `meetingctl meetings` / `delete` | History |
-| `meetingctl auth` | API Key / ChatGPT Subscription auth |
+| `meetingctl auth` | API Key auth |
+| `meetingctl mcp` | MCP endpoint/config/tools |
 | `meetingctl keygen` | Encryption key |
 
 Control API (loopback, bearer token in `~/.meetingctl/control.token`):
@@ -180,11 +178,11 @@ go build -o bin/meetingctl ./cmd/meetingctl
 - whisper.cpp + command STT adapters
 - Streamable HTTP MCP on meetingd
 - Per-user install scripts
+- MCP status/config helpers
 
 **Next**
 
 - FFmpeg mic + system capture (device adapters)
 - Managed whisper.cpp download with checksums
-- tunnel-client supervisor inside meetingd
 - Signed release binaries + Winget
 - Live capture VAD/chunk spool recovery

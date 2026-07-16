@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -82,17 +83,18 @@ func main() {
 			handler.ServeHTTP(w, r)
 			return
 		}
-		// Allow unauthenticated only from loopback when MEETINGCTL_MCP_OPEN=1 (dev).
-		if os.Getenv("MEETINGCTL_MCP_OPEN") == "1" {
-			handler.ServeHTTP(w, r)
-			return
-		}
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 	})
 	httpSrv := &http.Server{
 		Addr:              mcpListen,
 		Handler:           secured,
 		ReadHeaderTimeout: 5 * time.Second,
+	}
+	if host, _, err := net.SplitHostPort(mcpListen); err == nil {
+		if ip := net.ParseIP(host); ip != nil && !ip.IsLoopback() {
+			log.Error("refusing non-loopback mcp listen", "addr", mcpListen)
+			os.Exit(1)
+		}
 	}
 	go func() {
 		log.Info("mcp http listening", "addr", mcpListen, "path", "/mcp")

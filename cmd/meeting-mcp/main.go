@@ -12,8 +12,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-// meeting-mcp is a stdio MCP adapter. Prefer meetingd's Streamable HTTP /mcp
-// for ChatGPT; this binary remains useful for local IDE clients.
+// meeting-mcp is a stdio MCP adapter for local clients.
 func main() {
 	log := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
